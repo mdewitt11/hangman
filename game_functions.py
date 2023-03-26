@@ -1,45 +1,54 @@
-from os import system
+from os import system  
+from subprocess import run, PIPE
 from time import sleep
 from ascii_art import intro_screen, hangman
+import keyboard
+import re
 
 def ShowIntroScreen():
     system('clear')
     print(intro_screen)
     sleep(3)
 
-def get_user_input():
-    user_input = ""
-    while len(user_input) != 1:
-        user_input = input("Guess a letter:\n>>")
-        if len(user_input) != 1:
-            print("You must input ONE letter!!!")
-    return user_input
+def GetUserInput():
+    key_press = ''
+    match = None
+    while match == None:
+        key_press = run(["./get_key_press.sh"], check=True, stdout=PIPE).stdout[:1:].decode("utf-8")
+        match = re.search("[A-Za-z]", key_press)
+    return key_press
 
-def contains_char(array, char):
+def ContainsChar(array, char):
     for c in array:
         if c == char:
             return True
     return False
 
-def is_word_guessed(word, char_array):
-    hasCharacter = True
+def IsWordGuessed(word, char_array):
+    has_character = True
     for c in word:
-        hasCharacter = contains_char(char_array, c)
-        if not hasCharacter:
+        has_character = ContainsChar(char_array, c)
+        if not has_character:
             break
-    return hasCharacter
+    return has_character
 
-def GetWordHelper(word, guessed_characters):
+def GetWordHelper(word, guessed_characters): 
     word_helper = ""
     for char in word:
-        if contains_char(guessed_characters, char):
+        if ContainsChar(guessed_characters, char):
             word_helper = word_helper + char + " "
         elif char == " ":
             word_helper = word_helper + "  "
         else:
             word_helper = word_helper + "_ "
     return word_helper
-    
+
+def ShowWord(word):
+    word_string = ''
+    for char in word:
+        word_string += char + " "
+    print(word_string)
+
 def MainGameLoop(word):
     guessed_characters = [" "]
     number_of_fails = 0
@@ -49,35 +58,41 @@ def MainGameLoop(word):
         print(hangman[number_of_fails]) 
         word_helper = GetWordHelper(word, guessed_characters) 
         print(word_helper)
-        word_is_guessed = is_word_guessed(word, guessed_characters)
+        word_is_guessed = IsWordGuessed(word, guessed_characters)
         if word_is_guessed:
            return [word_is_guessed, number_of_fails]
-        user_input = get_user_input()
-        if contains_char(word, user_input):
+        user_input = GetUserInput()
+        if ContainsChar(word, user_input):
             guessed_characters.append(user_input)
         else:
             number_of_fails += 1
         word_helper = ""
     return [word_is_guessed, number_of_fails]
 
-def ShowWinnerMessage(number_of_fails):
+def ShowWinnerMessage(word, number_of_fails):
     system('clear')
     print(hangman[number_of_fails]) 
+    ShowWord(word)
     print("Congratulations!!!!")
     
-def ShowLoserMessage(number_of_fails):
+def ShowLoserMessage(word, number_of_fails):
     system('clear')
     print(hangman[number_of_fails]) 
+    ShowWord(word)
     print("You LOSE... Your a LOSER... ha ha ha")
 
-def ShowEnding(word_is_guessed, number_of_fails):
+def ShowEnding(word, word_is_guessed, number_of_fails):
     if word_is_guessed:
-        ShowWinnerMessage(number_of_fails)
+        ShowWinnerMessage(word, number_of_fails)
     else:
-        ShowLoserMessage(number_of_fails)
+        ShowLoserMessage(word, number_of_fails)
 
 def GetPlayAgain():
-    play_again = input("Play again?(yes)\n>> ")
-    if play_again != "yes":
-        return False
-    return True
+    print("Play again?(y/n)")
+    play_again = ''
+    while play_again != 'y' and play_again != 'n':
+        play_again = GetUserInput()
+        if play_again == 'y':
+            return True
+        if play_again == 'n':
+            return False
