@@ -2,9 +2,9 @@ from os import system
 from subprocess import run, PIPE
 from time import sleep
 from ascii_art import intro_screen, hangman
-import keyboard
 import re
 
+all_letters = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
 def ShowIntroScreen():
     system('clear')
     print(intro_screen)
@@ -32,10 +32,13 @@ def IsWordGuessed(word, char_array):
             break
     return has_character
 
-def GetWordHelper(word, guessed_characters): 
+def GetWordHelper(word, character_list): 
     word_helper = ""
+    center_space = int((38 - len(word) * 2)/2)
+    for s in range(center_space):
+        word_helper += " "
     for char in word:
-        if ContainsChar(guessed_characters, char):
+        if ContainsChar(character_list, char):
             word_helper = word_helper + char + " "
         elif char == " ":
             word_helper = word_helper + "  "
@@ -44,10 +47,26 @@ def GetWordHelper(word, guessed_characters):
     return word_helper
 
 def ShowWord(word):
-    word_string = ''
-    for char in word:
-        word_string += char + " "
+    word_string = GetWordHelper(word, all_letters)
     print(word_string)
+
+def PrintGuessedLetters(guessed_characters):
+    line1 = "       "
+    line2 = "        "
+    for l in range(0, 13):
+        if ContainsChar(guessed_characters, all_letters[l]):
+            line1 += "\u001B[38;5;240m" + all_letters[l] + " \u001B[0m"
+        else:
+            line1 += all_letters[l] + " "
+    for l in range(13, 26):
+        if ContainsChar(guessed_characters, all_letters[l]):
+            line2 += "\u001B[38;5;240m" + all_letters[l] + " \u001B[0m"
+        else:
+            line2 += all_letters[l] + " "
+    print()
+    print(line1)
+    print(line2)
+
 
 def MainGameLoop(word):
     guessed_characters = [" "]
@@ -58,14 +77,15 @@ def MainGameLoop(word):
         print(hangman[number_of_fails]) 
         word_helper = GetWordHelper(word, guessed_characters) 
         print(word_helper)
+        PrintGuessedLetters(guessed_characters)
         word_is_guessed = IsWordGuessed(word, guessed_characters)
         if word_is_guessed:
            return [word_is_guessed, number_of_fails]
         user_input = GetUserInput()
-        if ContainsChar(word, user_input):
+        if not ContainsChar(guessed_characters, user_input):
             guessed_characters.append(user_input)
-        else:
-            number_of_fails += 1
+            if not ContainsChar(word, user_input):
+                number_of_fails += 1
         word_helper = ""
     return [word_is_guessed, number_of_fails]
 
@@ -73,13 +93,15 @@ def ShowWinnerMessage(word, number_of_fails):
     system('clear')
     print(hangman[number_of_fails]) 
     ShowWord(word)
-    print("Congratulations!!!!")
+    print()
+    print("          Congratulations!!!!")
     
 def ShowLoserMessage(word, number_of_fails):
     system('clear')
     print(hangman[number_of_fails]) 
     ShowWord(word)
-    print("You LOSE... Your a LOSER... ha ha ha")
+    print()
+    print(" You LOSE... Your a LOSER... ha ha ha")
 
 def ShowEnding(word, word_is_guessed, number_of_fails):
     if word_is_guessed:
@@ -88,7 +110,7 @@ def ShowEnding(word, word_is_guessed, number_of_fails):
         ShowLoserMessage(word, number_of_fails)
 
 def GetPlayAgain():
-    print("Play again?(y/n)")
+    print("           Play again?(y/n)")
     play_again = ''
     while play_again != 'y' and play_again != 'n':
         play_again = GetUserInput()
