@@ -1,13 +1,15 @@
 import cursor
-from words import GetNewWord
-import game_functions
+from words import get_new_word
+from game_functions import show_intro_screen, main_game_loop
+from game_functions import ShowEnding, GetPlayAgain 
 
-game_functions.ShowIntroScreen()
-running = True
-while running:
+show_intro_screen()
+RUNNING = True
+
+while RUNNING:
     cursor.hide()
-    word = GetNewWord()
-    [word_is_guessed, number_of_fails] = game_functions.MainGameLoop(word)
-    game_functions.ShowEnding(word, word_is_guessed, number_of_fails)
-    running = game_functions.GetPlayAgain()
+    word: str = get_new_word()
+    [word_is_guessed, number_of_fails] = main_game_loop(word)
+    ShowEnding(word, word_is_guessed, number_of_fails)
+    RUNNING = GetPlayAgain()
     cursor.show()
